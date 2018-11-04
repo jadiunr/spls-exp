@@ -43,6 +43,13 @@ dbs:
 dbd:
 	@$(RAILS) db:drop
 
+# Bundleコマンド
+bi:
+	@$(FIG) exec app bundle install
+br:
+	@$(FIG) exec app gem uninstall -aIx
+	@make bi
+
 # Permission変更(*DANGER*)
 chown:
 	@chown -R $(SUDO_USER):$(SUDO_USER) .
