@@ -1,5 +1,5 @@
 FIG = docker-compose
-RAILS = $(FIG) exec app rails
+RAILS = $(FIG) exec app bin/rails
 
 # コンテナ操作コマンド等
 build:
@@ -45,7 +45,7 @@ dbd:
 
 # Bundleコマンド
 bi:
-	@$(FIG) exec app bundle install
+	@$(FIG) exec app bundle install -j3 --path vendor/bundle
 br:
 	@$(FIG) exec app gem uninstall -aIx
 	@make bi

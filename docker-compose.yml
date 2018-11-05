@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 services:
   app:
     build:
@@ -9,8 +9,6 @@ services:
       - "./.env.dev"
     volumes:
       - ".:/app"
-    volumes_from:
-      - data
     ports:
       - "3000:3000"
     depends_on:
@@ -19,18 +17,11 @@ services:
     image: "mysql:5.7"
     environment:
       - "MYSQL_ALLOW_EMPTY_PASSWORD=yes"
-    volumes_from:
-      - data
-    ports:
-      - "3306:3306"
-  data:
-    image: "busybox"
     volumes:
       - "db:/var/lib/mysql"
-      - "bundle:/usr/local/bundle"
+    ports:
+      - "3306:3306"
 
 volumes:
   db:
-    driver: local
-  bundle:
     driver: local
