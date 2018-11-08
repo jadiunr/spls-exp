@@ -10,14 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_11_08_012314) do
-
-  create_table "streaming_sessions", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.bigint "user_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["user_id"], name: "index_streaming_sessions_on_user_id"
-  end
+ActiveRecord::Schema.define(version: 2018_11_04_133554) do
 
   create_table "users", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.string "provider", default: "email", null: false
@@ -39,7 +32,8 @@ ActiveRecord::Schema.define(version: 2018_11_08_012314) do
     t.integer "failed_attempts", default: 0, null: false
     t.string "unlock_token"
     t.datetime "locked_at"
-    t.string "name"
+    t.string "unique_name", null: false
+    t.string "display_name"
     t.string "description"
     t.string "image"
     t.string "email"
@@ -50,8 +44,8 @@ ActiveRecord::Schema.define(version: 2018_11_08_012314) do
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true
+    t.index ["unique_name"], name: "index_users_on_unique_name", unique: true
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
   end
 
-  add_foreign_key "streaming_sessions", "users"
 end

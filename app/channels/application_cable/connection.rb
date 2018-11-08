@@ -3,8 +3,8 @@ module ApplicationCable
     identified_by :current_user, :uuid
 
     def connect
-      self.uuid = SecureRandom.urlsafe_base64
       self.current_user = find_verified_user
+      self.uuid = SecureRandom.urlsafe_base64
     end
 
     def find_verified_user
@@ -15,7 +15,7 @@ module ApplicationCable
       client = params["client"]
 
       user = User.find_by(email: uid)
-      if user && user.valid_token?(token, client_id)
+      if user && user.valid_token?(access_token, client)
         user
       else
         return nil
