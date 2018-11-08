@@ -24,6 +24,11 @@ services:
     ports:
       - "3306:3306"
 
+  redis:
+    image: "redis:4.0.11-alpine3.8"
+    ports:
+      - "6379:6379"
+
   adminer:
     image: "adminer:4.6.3"
     ports:
