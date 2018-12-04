@@ -3,7 +3,11 @@ class LiveChannel < ApplicationCable::Channel
     @root_unique_name = params[:unique_name]
     stream_from "live_#{params[:unique_name]}"
     stream_from uuid
-    stream_from @root_unique_name if @root_unique_name == current_user.unique_name
+    if current_user.present?
+      if @root_unique_name == current_user.unique_name
+        stream_from @root_unique_name
+      end
+    end
   end
 
   def unsubscribed
@@ -11,7 +15,7 @@ class LiveChannel < ApplicationCable::Channel
   end
 
   def be_root
-    tree = [Node.create!(@root_unique_name, nil, [], true)]
+    tree = [Node.create!(uuid, nil, [], true)]
     rset(@root_unique_name, tree)
   end
 
@@ -29,13 +33,13 @@ class LiveChannel < ApplicationCable::Channel
     )
   end
 
-  def add_node_to_tree(parent_uuid, children_uuid)
+  def add_node_to_tree(data)
     tree = rget(@root_unique_name)
-    tree << Node.create!(uuid, parent_uuid, children_uuid, true)
-    parent = tree.find { |node| node["uuid"] == parent_uuid }
+    tree << Node.create!(uuid, data["parent_uuid"], data["children_uuid"], true)
+    parent = tree.find { |node| node["uuid"] == data["parent_uuid"] }
     parent["children_uuid"] = uuid
     rset(@root_unique_name, tree)
-    [uuid, parent_uuid].each {|uuid| ActionCable.server.broadcast(
+    [uuid, data["parent_uuid"]].each {|uuid| ActionCable.server.broadcast(
       uuid,
       method: "add_node_to_tree",
       tree: tree
@@ -61,21 +65,24 @@ class LiveChannel < ApplicationCable::Channel
     )}
   end
 
-  def signaling(sendto, data)
+  # perform("signaling", { sendto: "id", data: "signaling_data" })
+  def emit_to(data)
     ActionCable.server.broadcast(
-      sendto,
-      method: "signaling",
-      data: data
+      data["sendto"],
+      method: data["method"],
+      from_uuid: uuid,
+      message: data["message"]
     )
   end
 
+  # perform("comment", { comment: "message" })
   def comment(data)
     name = current_user.unique_name || "Guest"
     ActionCable.server.broadcast(
       "live_#{@root_unique_name}",
       method: "comment",
       name: name,
-      comment: data
+      comment: data["comment"]
     )
   end
 
