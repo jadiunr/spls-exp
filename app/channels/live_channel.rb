@@ -37,7 +37,7 @@ class LiveChannel < ApplicationCable::Channel
     tree = rget(@root_unique_name)
     tree << Node.create!(uuid, data["parent_uuid"], data["children_uuid"], true)
     parent = tree.find { |node| node["uuid"] == data["parent_uuid"] }
-    parent["children_uuid"] = uuid
+    parent["children_uuid"] << uuid
     rset(@root_unique_name, tree)
     [uuid, data["parent_uuid"]].each {|uuid| ActionCable.server.broadcast(
       uuid,
