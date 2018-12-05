@@ -3,15 +3,31 @@ class LiveChannel < ApplicationCable::Channel
     @root_unique_name = params[:unique_name]
     stream_from "live_#{params[:unique_name]}"
     stream_from uuid
-    if current_user.present?
-      if @root_unique_name == current_user.unique_name
-        stream_from @root_unique_name
-      end
+    if current_user.present? and @root_unique_name == current_user.unique_name
+      stream_from @root_unique_name
     end
   end
 
   def unsubscribed
-    destroy_tree if @root_unique_name == current_user.unique_name
+    if current_user.present? and @root_unique_name == current_user.unique_name
+      destroy_tree
+    end
+
+    delete_node(uuid)
+
+    ActionCable.server.broadcast(
+      "live_#{@root_unique_name}",
+      from_uuid: uuid,
+      method: "disconnected"
+    )
+  end
+
+  def get_uuid
+    ActionCable.server.broadcast(
+      uuid,
+      method: "get_uuid",
+      uuid: uuid
+    )
   end
 
   def be_root
@@ -97,5 +113,15 @@ class LiveChannel < ApplicationCable::Channel
 
     def rdel(key)
       REDIS.del(key)
+    end
+
+    def delete_node(id)
+      tree = rget(@root_unique_name)
+      tree.delete_if {|node| node["uuid"] == id}
+      parent = tree.find{|node| node["children_uuid"].include?(id)}
+      parent["children_uuid"].delete(id)
+      lost_children = tree.select {|node| node["parent_uuid"] == id}
+      lost_children.each {|node| node["parent_uuid"] = nil} unless lost_children == []
+      rset(@root_unique_name, tree)
     end
 end
