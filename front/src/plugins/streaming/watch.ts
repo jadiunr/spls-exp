@@ -32,7 +32,7 @@ export default class WatchStreaming {
             case 'get_node_tree':
               console.log(data);
               const parentNode = data.tree.find((node: any) => {
-                return (node.children_uuid.length < 1) && (node.uuid !== this.uuid);
+                return (node.children_uuid.length < 2) && (node.uuid !== this.uuid);
               });
               if (!!parentNode) { this.requestStream(parentNode.uuid); }
               break;
