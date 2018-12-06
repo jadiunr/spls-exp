@@ -1,7 +1,7 @@
 version: '3'
 services:
   app:
-    container_name: "ratt_app"
+    container_name: "spls_exp_app"
     build:
       context: .
       dockerfile: "Dockerfile.dev"
@@ -16,6 +16,19 @@ services:
       - db
     tty: true
     stdin_open: true
+
+  web:
+    build:
+      context: ./front
+      dockerfile: "Dockerfile.dev"
+    command: ash -c "npm run serve"
+    volumes:
+      - "./front:/web"
+    ports:
+      - "8080:8080"
+    tty: true
+    stdin_open: true
+
   db:
     image: "mysql:5.7"
     environment:
