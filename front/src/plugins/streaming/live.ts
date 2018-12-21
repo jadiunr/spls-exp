@@ -26,6 +26,7 @@ export default class LiveStreaming {
           // no op
         },
         received: (data) => {
+          console.log("data received")
           switch (data.method) {
             case 'get_node_tree':
               console.log(data.tree);
@@ -53,6 +54,7 @@ export default class LiveStreaming {
   private signaling(fromId: string, method: string, message: any) {
     switch (method) {
       case 'request_stream':
+        console.log("received request_stream");
         this.sendOffer(fromId);
         break;
       case 'answer':

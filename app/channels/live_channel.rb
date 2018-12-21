@@ -31,7 +31,12 @@ class LiveChannel < ApplicationCable::Channel
   end
 
   def be_root
-    tree = [Node.create!(uuid, nil, [], true)]
+    tree = {}
+    tree[uuid] = {
+      parent_uuid: nil,
+      children_uuid: [],
+      relayable: true
+    }
     rset(@root_unique_name, tree)
   end
 
@@ -51,8 +56,12 @@ class LiveChannel < ApplicationCable::Channel
 
   def add_node_to_tree(data)
     tree = rget(@root_unique_name)
-    tree << Node.create!(uuid, data["parent_uuid"], data["children_uuid"], true)
-    parent = tree.find { |node| node["uuid"] == data["parent_uuid"] }
+    tree[uuid] = {
+      parent_uuid: data["parent_uuid"],
+      children_uuid: data["children_uuid"],
+      relayable: true
+    }
+    parent = tree[data["parent_uuid"]]
     parent["children_uuid"] << uuid
     rset(@root_unique_name, tree)
     [uuid, data["parent_uuid"]].each {|uuid| ActionCable.server.broadcast(
@@ -62,43 +71,12 @@ class LiveChannel < ApplicationCable::Channel
     )}
   end
 
-  def child_disconnect_notify(dc_child_uuid)
-    tree = rget(@root_unique_name)
-    tree.delete_if {|node| node["uuid"] == dc_child_uuid}
-    lost_children = tree.select {|node| node["parent_uuid"] == dc_child_uuid}
-    lost_children.each {|node| node["parent_uuid"] = nil} unless lost_children == []
-    rset(@root_unique_name, tree)
-
-    ActionCable.server.broadcast(
-      uuid,
-      method: "child_disconnect_notify",
-      tree: tree
-    )
-    lost_children.each {|lost_child| ActionCable.server.broadcast(
-      lost_child["uuid"],
-      method: "child_disconnect_notify",
-      tree: tree
-    )}
-  end
-
-  # perform("signaling", { sendto: "id", data: "signaling_data" })
   def emit_to(data)
     ActionCable.server.broadcast(
       data["sendto"],
       method: data["method"],
       from_uuid: uuid,
       message: data["message"]
-    )
-  end
-
-  # perform("comment", { comment: "message" })
-  def comment(data)
-    name = current_user.unique_name || "Guest"
-    ActionCable.server.broadcast(
-      "live_#{@root_unique_name}",
-      method: "comment",
-      name: name,
-      comment: data["comment"]
     )
   end
 
@@ -117,10 +95,11 @@ class LiveChannel < ApplicationCable::Channel
 
     def delete_node(id)
       tree = rget(@root_unique_name)
-      tree.delete_if {|node| node["uuid"] == id}
-      parent = tree.find{|node| node["children_uuid"].include?(id)}
+      deleting_node = tree[id]
+      tree.delete(id)
+      parent = tree[deleting_node["parent_uuid"]]
       parent["children_uuid"].delete(id)
-      lost_children = tree.select {|node| node["parent_uuid"] == id}
+      lost_children = tree[deleting_node["children_uuid"]] || []
       lost_children.each {|node| node["parent_uuid"] = nil} unless lost_children == []
       rset(@root_unique_name, tree)
     end

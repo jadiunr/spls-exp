@@ -31,10 +31,13 @@ export default class WatchStreaming {
               break;
             case 'get_node_tree':
               console.log(data);
-              const parentNode = data.tree.find((node: any) => {
-                return (node.children_uuid.length < 2) && (node.uuid !== this.uuid);
+              const parentNodeKeys = Object.keys(data.tree).filter((key) => {
+                const node = data.tree[key];
+                return (node.children_uuid.length < 1) && (node.uuid !== this.uuid);
               });
-              if (!!parentNode) { this.requestStream(parentNode.uuid); }
+              if (!!parentNodeKeys) {
+                this.requestStream(parentNodeKeys[0]);
+              }
               break;
             default:
               this.signaling(data.from_uuid, data.method, data.message);
@@ -58,7 +61,7 @@ export default class WatchStreaming {
       case 'offer':
         this.cable.perform('add_node_to_tree', {
           parent_uuid: fromId,
-          children_uuid: [],
+          children_uuid: Object.keys(this.childPeerConnections),
         });
         this.setOffer(fromId, message);
         this.sendAnswer(fromId);
