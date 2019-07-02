@@ -1,15 +1,14 @@
 version: '3'
 services:
   app:
-    container_name: "spls_exp_app"
     build:
       context: .
-      dockerfile: "Dockerfile.dev"
-    command: ash -c "rm -f /app/tmp/pids/server.pid; bundle exec rails s -p 3000 -b '0.0.0.0'"
+      dockerfile: dev.Dockerfile
+    command: ash -c "rm -f /app/tmp/pids/server.pid; bundle exec rails s -b 0.0.0.0"
     env_file:
-      - "./.env.dev"
+      - ./.env.dev
     volumes:
-      - ".:/app"
+      - .:/app
     ports:
       - "3000:3000"
     depends_on:
@@ -20,34 +19,33 @@ services:
   web:
     build:
       context: ./front
-      dockerfile: "Dockerfile.dev"
+      dockerfile: dev.Dockerfile
     command: ash -c "npm run serve"
     volumes:
-      - "./front:/web"
+      - ./front:/web
     ports:
       - "8080:8080"
     tty: true
     stdin_open: true
 
   db:
-    image: "mysql:5.7"
+    image: mysql:5.7
     environment:
       MYSQL_ROOT_PASSWORD: secret
     volumes:
-      - "db:/var/lib/mysql"
+      - db:/var/lib/mysql
     ports:
       - "3306:3306"
 
   redis:
-    image: "redis:4.0.11-alpine3.8"
+    image: redis:4.0.11-alpine3.8
     ports:
       - "6379:6379"
 
   adminer:
-    image: "adminer:4.6.3"
+    image: adminer:4.6.3
     ports:
       - "8081:8080"
 
 volumes:
   db:
-    driver: local
