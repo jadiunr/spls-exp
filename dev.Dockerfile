@@ -10,18 +10,11 @@ RUN apk --update add \
     rm /usr/lib/libmysqld* && \
     rm /usr/bin/mysql* && \
     rm -rf /tmp/* /var/cache/apk/*
-    
-ENV ENTRYKIT_VERSION 0.4.0
-
-RUN wget https://github.com/progrium/entrykit/releases/download/v${ENTRYKIT_VERSION}/entrykit_${ENTRYKIT_VERSION}_Linux_x86_64.tgz \
-    && tar -xvzf entrykit_${ENTRYKIT_VERSION}_Linux_x86_64.tgz \
-    && rm entrykit_${ENTRYKIT_VERSION}_Linux_x86_64.tgz \
-    && mv entrykit /bin/entrykit \
-    && chmod +x /bin/entrykit \
-    && entrykit --symlink
 
 WORKDIR /app
 
-ENTRYPOINT [ \
-    "prehook", "ruby -v", "--", \
-    "prehook", "bundle install -j3 --quiet --path vendor/bundle", "--"]
+COPY Gemfile Gemfile.lock ./
+RUN bundle install -j4 --path vendor/bundle
+COPY . .
+
+CMD bundle exec rails s -b 0.0.0.0
